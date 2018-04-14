@@ -93,7 +93,7 @@ public class TxHandler {
     	return true;
     }
 
-    private void showPoolContents(UTXOPool pool) {
+    private void showPoolContents() {
 
     	if(currentPool.getAllUTXO().size() == 0)
     		System.out.println("Current pool is empty");
@@ -105,113 +105,30 @@ public class TxHandler {
 
     	}
 
-    	if(pool.getAllUTXO().size() == 0)
-    		System.out.println("Tx Pool is empty");
-
-    	for(UTXO ut : pool.getAllUTXO())
-    		System.out.println("Tx Pool contains input of value: " + pool.getTxOutput(ut).value);
     }
 
     private void processTx(Transaction tx) {
    	   ArrayList<Transaction.Output> txOutputs = tx.getOutputs();
    	   ArrayList<Transaction.Input> txInputs = tx.getInputs();
 
-   	   Transaction txInputsCopy = new Transaction();
-   	   for(Transaction.Input i : tx.getInputs()) {
-   		   txInputsCopy.addInput(i.prevTxHash, i.outputIndex);
-   	   }
+   	   System.out.println("Processing transaction.");
+       showPoolContents();
 
-   	   ArrayList<Transaction.Input> remainingTxInputs = txInputsCopy.getInputs();
-
-
-       //Make a pool of UTXOs containing all the inputs in the transaction.
+       //Delete the inputs from the current UTXOPool
        UTXOPool utxosInTx = new UTXOPool();
-       for(Transaction.Input i : txInputs) {
-    	   UTXO currentUTXO = new UTXO(i.prevTxHash,i.outputIndex);
-    	   utxosInTx.addUTXO(currentUTXO, currentPool.getTxOutput(currentUTXO));
+       for(Transaction.Input i : tx.getInputs()) {
+    	   currentPool.removeUTXO(new UTXO(i.prevTxHash,i.outputIndex));
        }
 
-//   	   	Process each output one by one, consuming inputs as necessary.
-
-        for(int k = 0; k < txOutputs.size(); k++) {
-
-            showPoolContents(utxosInTx);
-
-        	Transaction.Output o = txOutputs.get(k);
-        	System.out.println("Testing output with value " + o.value);
-        	double remainingOutput = o.value;
-        	while(remainingOutput > 0){
-
-        	      showPoolContents(utxosInTx);
-
-         		   System.out.println("Output's current value is " + remainingOutput);
-         		   Transaction.Input i = remainingTxInputs.get(0);
-         		   UTXO currentUTXO = new UTXO(i.prevTxHash,i.outputIndex);
-         		   double value = utxosInTx.getTxOutput(currentUTXO).value;
-         		   PublicKey address = utxosInTx.getTxOutput(currentUTXO).address;
-         		   Transaction.Output sourceOutput = tx.new Output(value,address);
-         		   System.out.println("Comparing to input with value " + sourceOutput.value);
-
-         		   //Output is less than the input, meaning the output can now be added to the pool
-         		   //and the input can still be used in this specific transaction for other outputs
-         		      if(remainingOutput < sourceOutput.value) {
-		          		   //revise the inputs value
-         		    	   sourceOutput.value -= remainingOutput;
-         		    	   //no output remains
-		          		   remainingOutput = 0;
-		          		   //Revise the input UTXO to reflect the new lower value
-		          		   utxosInTx.removeUTXO(currentUTXO);
-		          		   utxosInTx.addUTXO(currentUTXO, sourceOutput);
-		          		   System.out.println("New input value: " + currentPool.getTxOutput(currentUTXO).value);
-
-		          		   //Add the new output to the current UTXOPool
-		          		   currentPool.addUTXO(new UTXO(tx.getHash(),i.outputIndex), o);
-		          	   }
-
-         		      //Output is greater than input, meaning the output is reduced, and the input
-         		      //is no longer available.
-         		      else{
-		          	      remainingOutput -= sourceOutput.value;
-		          	      System.out.println("Removing input with value: " + sourceOutput.value
-		          	    		  + ". Output has value " + remainingOutput);
-
-		          	      //Add new available output to UTXO
-		          	      currentPool.addUTXO(new UTXO(tx.getHash(), k), o);
-
-		          	      //Input is exhausted so remove it from the utxosInTx in the transaction
-		          	      //And from the tx inputs
-		          	      utxosInTx.removeUTXO(currentUTXO);
-		          	      remainingTxInputs.remove(0);
-		          	   	}
-         	   }
-        }
-
-        //Remove all the tx inputs from the UTXO Pool, since a tx consumes all inputs.
-        for(Transaction.Input i : txInputs) {
-        	System.out.println("Cycling through tx inputs");
-        	UTXO toRemove = new UTXO(i.prevTxHash,i.outputIndex);
-        	System.out.println("Removing from UTXO pool input of value " + currentPool.getTxOutput(toRemove).value);
-        	currentPool.removeUTXO(toRemove);
-
-        }
-
+       //Add the new output to the current UTXOPool
+       for(int k = 0; k < txOutputs.size(); k++) {
+  		  currentPool.addUTXO(new UTXO(tx.getHash(),k), txOutputs.get(k));
+       }
+       
         System.out.println("Finished processing transaction.");
-        showPoolContents(utxosInTx);
+        showPoolContents();
     }
 
-//    private double txTotalInput(Transaction tx) {
-//       	double inputTotal = 0;
-//    	ArrayList<UTXO> claimedOutputs = new ArrayList<UTXO>();
-//        for(Transaction.Input i : tx.getInputs()) {
-//          UTXO nextUTXO = new UTXO(i.prevTxHash,i.outputIndex);
-//           claimedOutputs.add(nextUTXO);
-//        }
-//        for(UTXO ut : claimedOutputs) {
-//        	inputTotal += currentPool.getTxOutput(ut).value;
-//        }
-//        return inputTotal;
-//    }
-//
     private double txTotalOutput(Transaction tx) {
     	double outputTotal = 0;
     	   ArrayList<Transaction.Output> txs = tx.getOutputs();
