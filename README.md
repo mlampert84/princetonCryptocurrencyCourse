@@ -1,4 +1,3 @@
 # Introduction to Crypto and Cryptocurrencies
 
-
-Programming Assignments from the Coursera Course. 
+Programming Assignments from the Coursera Course.

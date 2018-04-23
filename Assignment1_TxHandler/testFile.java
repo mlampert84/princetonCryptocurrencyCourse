@@ -37,8 +37,8 @@ public class testFile {
 		Tx tx2 = new Tx();
 		tx2.addInput(tx.getHash(), 0);
 		tx2.addInput(tx.getHash(), 1);
-		tx2.addOutput(8, pk_alice.getPublic());
-		tx2.addOutput(7, pk_bob.getPublic());
+		tx2.addOutput(12, pk_alice.getPublic());
+		tx2.addOutput(6, pk_bob.getPublic());
 		tx2.signTx(pk_scrooge.getPrivate(), 0);
 		tx2.signTx(pk_scrooge.getPrivate(), 1);
 
@@ -51,19 +51,26 @@ public class testFile {
 
 		
 		Tx tx4 = new Tx();
-		tx4.addInput(tx2.getHash(),2);
+		tx4.addInput(tx2.getHash(),0);
         tx4.addOutput(4, pk_scrooge.getPublic());
-        tx4.signTx(pk_bob.getPrivate(), 0);
+        tx4.signTx(pk_alice.getPrivate(), 0);
+        
+    	Tx tx5 = new Tx();
+		tx5.addInput(tx2.getHash(),0);
+		tx5.addInput(tx2.getHash(),0);
+		tx5.addOutput(6, pk_scrooge.getPublic());
+        tx5.signTx(pk_alice.getPrivate(), 0);
+        
 		
 //		Start the txHandler
-		TxHandler txHandler = new TxHandler(utxoPool);
+		MaxFeeTxHandler txHandler = new MaxFeeTxHandler(utxoPool);
 //		System.out.println("txHandler.isValidTx(tx2) returns: " + txHandler.isValidTx(tx2));		
 //	    System.out.println("txHandler.handleTxs(new Transaction[]{tx2, tx3}) returns: " +
 //		            txHandler.handleTxs(new Transaction[]{tx2}).length + " transaction(s)");
 		
 
 
-				 txHandler.handleTxs(new Transaction[]{tx2,tx3});
+				 txHandler.handleTxs(new Transaction[]{tx2,tx3,tx4, tx5});
 	}
 
 	//Copied from https://github.com/keskival/cryptocurrency-course-materials/blob/master/assignment1/Main.java

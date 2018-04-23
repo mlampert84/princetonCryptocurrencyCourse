@@ -1,3 +1,4 @@
+import java.util.Arrays;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SignatureException;
@@ -23,9 +24,9 @@ public class largerTests {
 		
 		ValidationLists<Transaction> trxsValidation = utxoTestSet.getValidationLists();
 		
-		TxHandler txHandler = new TxHandler(utxoTestSet.getUtxoPool());
-		for(Transaction tx : trxsValidation.allElements())
-			if(!txHandler.isValidTx(tx)) System.out.println("Transaction invalid.");;
-	}
+		MaxFeeTxHandler txHandler = new MaxFeeTxHandler(utxoTestSet.getUtxoPool());
+		Transaction [] transactions = trxsValidation.allElements().toArray(new Transaction[trxsValidation.allElements().size()]); 
+		Transaction [] successTxs = txHandler.handleTxs(transactions);
 
+}
 }
